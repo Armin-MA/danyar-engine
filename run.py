@@ -51,7 +51,20 @@ def main() -> None:
 * برای خروج از برنامه، کلیدهای Ctrl + C را در همین پنجره فشار دهید.
 ================================================================================
 """
-    print(banner)
+    try:
+        print(banner)
+    except Exception:
+        fallback_banner = f"""
+================================================================================
+   Danyar Engine - Dialectical GraphRAG Advisor
+================================================================================
+* Local server ready.
+* Open your browser at: {url}
+* Mode: {db_mode}
+* Press Ctrl+C to stop.
+================================================================================
+"""
+        print(fallback_banner)
 
     # Launch browser automatically in background
     threading.Thread(target=open_browser_delayed, args=(url,), daemon=True).start()

@@ -1,19 +1,5 @@
 @echo off
-chcp 65001 > nul
-title Danyar Engine - موتور مشاور دانیار
-
-echo.
-echo =====================================================================
-echo    دانیار ^| موتور مشاور هوشمند دیالکتیکی (Danyar Engine)
-echo =====================================================================
-echo.
-echo  در حال آماده‌سازی و راه‌اندازی سرور محلی...
-echo.
-
+title Danyar Engine Launcher
+cd /d "%~dp0"
 python run.py
-
-if %ERRORLEVEL% NEQ 0 (
-    echo.
-    echo [خطا] در اجرای سرور مشکلی پیش آمد. لطفاً بررسی کنید پایتون نصب باشد.
-    pause
-)
+if errorlevel 1 pause
