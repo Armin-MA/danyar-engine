@@ -206,6 +206,14 @@ class InMemoryGraphRepository(IGraphRepository, IAnnotationRepository):
 
         return entity
 
+    def add_node(self, node: NodeDTO) -> None:
+        """Add or update a node in the in-memory store."""
+        self._nodes[node.id] = node
+
+    def add_edge(self, edge: EdgeDTO) -> None:
+        """Add a directed relationship between existing nodes."""
+        self._edges.append(edge)
+
     def fetch_notes_for_claim(self, claim_id: str) -> list[UserNoteEntity]:
         """Retrieve notes attached to a claim."""
         return self._notes.get(claim_id, [])
