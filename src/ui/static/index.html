@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>دانیار | موتور مشاور هوشمند دیالکتیکی (Danyar Dialectical GraphRAG)</title>
+  <!-- Vazirmatn Persian Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+  <!-- 3D Force Graph WebGL CDN -->
+  <script src="https://unpkg.com/3d-force-graph"></script>
+
+  <style>
+    :root {
+      --bg-main: #0d1117;
+      --bg-panel: #161b22;
+      --bg-card: #21262d;
+      --border-color: #30363d;
+      --text-main: #c9d1d9;
+      --text-muted: #8b949e;
+      --accent-cyan: #58a6ff;
+      --accent-purple: #bc8cff;
+      --accent-green: #3fb950;
+      --accent-red: #f85149;
+      --accent-amber: #d29922;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Vazirmatn', -apple-system, BlinkMacSystemFont, 'Segoe UI', Tahoma, sans-serif;
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* Reconnection Banner */
+    #reconnection-banner {
+      display: none;
+      background: #b62324;
+      color: #fff;
+      padding: 8px 16px;
+      text-align: center;
+      font-weight: 500;
+      font-size: 14px;
+      z-index: 1000;
+    }
+
+    /* Top Navbar */
+    header {
+      background: var(--bg-panel);
+      border-bottom: 1px solid var(--border-color);
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand h1 {
+      font-size: 18px;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: -0.5px;
+    }
+
+    .badge {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 12px;
+      background: rgba(88, 166, 255, 0.15);
+      color: var(--accent-cyan);
+      border: 1px solid rgba(88, 166, 255, 0.3);
+    }
+
+    #status-indicator {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--accent-green);
+      box-shadow: 0 0 8px var(--accent-green);
+    }
+
+    /* Main Dashboard Layout */
+    .dashboard-container {
+      display: grid;
+      grid-template-columns: 360px 1fr 380px;
+      height: calc(100vh - 56px);
+      overflow: hidden;
+    }
+
+    /* Panel Base */
+    .panel {
+      background: var(--bg-panel);
+      border-left: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .panel-header {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border-color);
+      font-weight: 700;
+      font-size: 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* Chat Panel */
+    #chat-container {
+      border-right: 1px solid var(--border-color);
+      border-left: none;
+    }
+
+    #chat-messages {
+      flex: 1;
+      padding: 16px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .msg-bubble {
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-size: 13.5px;
+      line-height: 1.7;
+      max-width: 90%;
+    }
+
+    .msg-user {
+      align-self: flex-start;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      color: #fff;
+    }
+
+    .msg-advisor {
+      align-self: flex-end;
+      background: rgba(88, 166, 255, 0.08);
+      border: 1px solid rgba(88, 166, 255, 0.25);
+      color: var(--text-main);
+    }
+
+    .chat-input-area {
+      padding: 12px;
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      background: var(--bg-panel);
+    }
+
+    textarea.chat-input {
+      width: 100%;
+      height: 70px;
+      background: var(--bg-main);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      color: #fff;
+      padding: 10px;
+      font-family: inherit;
+      font-size: 13px;
+      resize: none;
+      outline: none;
+    }
+
+    textarea.chat-input:focus {
+      border-color: var(--accent-cyan);
+    }
+
+    .chat-btn {
+      background: var(--accent-cyan);
+      color: #0d1117;
+      border: none;
+      border-radius: 6px;
+      padding: 8px 16px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      transition: opacity 0.2s;
+    }
+
+    .chat-btn:hover {
+      opacity: 0.9;
+    }
+
+    /* Graph Center Panel */
+    .graph-panel {
+      position: relative;
+      background: #05080d;
+      display: flex;
+      flex-direction: column;
+    }
+
+    #3d-graph {
+      width: 100%;
+      height: 100%;
+    }
+
+    .graph-legend {
+      position: absolute;
+      bottom: 16px;
+      right: 16px;
+      background: rgba(22, 27, 34, 0.85);
+      border: 1px solid var(--border-color);
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      backdrop-filter: blur(4px);
+      z-index: 10;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+
+    /* Milkdown Note & Annotation Panel */
+    #note-editor {
+      overflow-y: auto;
+      padding: 18px;
+    }
+
+    .card-preview {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 20px;
+    }
+
+    .card-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 8px;
+    }
+
+    .card-meta {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+      display: flex;
+      gap: 12px;
+    }
+
+    .annotation-form {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .dispute-toggle {
+      display: flex;
+      gap: 10px;
+    }
+
+    .dispute-toggle label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Reconnection Banner -->
+  <div id="reconnection-banner">
+    ارتباط با سرور پشتیبان دانیار برقرار نشد. در حال تلاش مجدد...
+  </div>
+
+  <!-- Header -->
+  <header>
+    <div class="brand">
+      <h1>دانیار | Danyar Engine</h1>
+      <span class="badge">Dialectical GraphRAG Advisor</span>
+    </div>
+    <div id="status-indicator">
+      <div class="status-dot"></div>
+      <span>پایگاه دانش آنلاین (Neo4j)</span>
+    </div>
+  </header>
+
+  <!-- Dashboard Grid -->
+  <div class="dashboard-container">
+
+    <!-- Column 1: Socratic Chat Advisor -->
+    <div class="panel" id="chat-container">
+      <div class="panel-header">
+        <span>مشاور هوشمند دانیار</span>
+        <span style="font-size: 11px; color: var(--text-muted);">تحلیل دیالکتیکی</span>
+      </div>
+      <div id="chat-messages">
+        <div class="msg-bubble msg-advisor">
+          درود! من دانیار هستم، مشاور هوشمند دیالکتیکی شما.
+          پرسش یا چالش استراتژیک خود را مطرح کنید تا بر اساس اجماع و تضاد آرای بزرگان پایگاه دانش بررسی کنیم.
+        </div>
+      </div>
+      <div class="chat-input-area">
+        <textarea id="chat-query" class="chat-input" placeholder="پرسش خود را بنویسید (مثال: آیا در مرحله قبل از PMF باید تیم را توسعه دهیم؟)..."></textarea>
+        <button id="send-chat-btn" class="chat-btn">پرسش از دانیار</button>
+      </div>
+    </div>
+
+    <!-- Column 2: 3D Force Graph Visualizer -->
+    <div class="graph-panel">
+      <div id="3d-graph"></div>
+
+      <!-- Graph Legend -->
+      <div class="graph-legend">
+        <div class="legend-item"><div class="dot" style="background: var(--accent-cyan)"></div> گزاره (Claim)</div>
+        <div class="legend-item"><div class="dot" style="background: var(--accent-purple)"></div> مفهوم (Concept)</div>
+        <div class="legend-item"><div class="dot" style="background: var(--accent-amber)"></div> شرط مرزی (Condition)</div>
+        <div class="legend-item"><div class="dot" style="background: var(--accent-red)"></div> تضاد (CONTRADICTS)</div>
+        <div class="legend-item"><div class="dot" style="background: var(--accent-green)"></div> تایید (SUPPORTS)</div>
+      </div>
+    </div>
+
+    <!-- Column 3: Milkdown RTL Markdown Editor & User Note -->
+    <div class="panel" id="note-editor">
+      <div class="panel-header">
+        <span>کارت گزاره و یادداشت‌ها</span>
+        <span style="font-size: 11px; color: var(--accent-cyan)">Milkdown Viewer</span>
+      </div>
+
+      <div id="milkdown-editor">
+        <div class="card-preview" id="active-card">
+          <div class="card-title" id="card-statement">گزاره‌ای برای بازبینی انتخاب نشده است</div>
+          <div class="card-meta">
+            <span id="card-author">نویسنده: -</span>
+            <span id="card-source">منبع: -</span>
+          </div>
+          <p id="card-condition" style="font-size: 12.5px; color: var(--text-muted);">برای مشاهده جزئیات گزاره و شروط کاربست، روی گره‌های گراف کلیک کنید.</p>
+        </div>
+
+        <!-- Annotation / Dispute Form -->
+        <div class="panel-header" style="padding-left: 0; padding-right: 0;">
+          <span>ثبت یادداشت یا نقد بر این گزاره</span>
+        </div>
+        <div class="annotation-form" style="margin-top: 12px;">
+          <div class="dispute-toggle">
+            <label><input type="radio" name="note-type" value="Endorsement" checked> تایید / تجربه مثبت</label>
+            <label><input type="radio" name="note-type" value="Dispute"> نقد / تناقض تجربی (Dispute)</label>
+          </div>
+          <textarea id="note-content" class="chat-input" placeholder="دیدگاه، شواهد یا تجربه خود را پیرامون این گزاره بنویسید..." style="height: 90px;"></textarea>
+          <button id="save-note-btn" class="chat-btn" style="background: var(--accent-purple); color: #fff;">ثبت یادداشت کاربر</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Interactive Dashboard Controller -->
+  <script>
+    let graphInstance = null;
+    let selectedNodeId = null;
+
+    // Initialize 3D Force Graph
+    function initGraph(graphData) {
+      const container = document.getElementById('3d-graph');
+      if (!container || typeof ForceGraph3D === 'undefined') return;
+
+      graphInstance = ForceGraph3D()(container)
+        .graphData(graphData)
+        .nodeLabel(node => `${node.label}: ${node.id}`)
+        .nodeColor(node => {
+          if (node.label === 'Claim') return '#58a6ff';
+          if (node.label === 'Concept') return '#bc8cff';
+          if (node.label === 'Condition') return '#d29922';
+          return '#3fb950';
+        })
+        .linkColor(link => {
+          if (link.relation_type === 'CONTRADICTS') return '#f85149';
+          if (link.relation_type === 'SUPPORTS') return '#3fb950';
+          return '#e3b341';
+        })
+        .linkWidth(link => link.relation_type === 'CONTRADICTS' ? 2.5 : 1.2)
+        .onNodeClick(node => {
+          selectedNodeId = node.id;
+          document.getElementById('card-statement').innerText = node.properties.statement || node.id;
+          document.getElementById('card-author').innerText = 'نویسنده: ' + (node.properties.author || 'ثبت نشده');
+          document.getElementById('card-source').innerText = 'منبع: ' + (node.properties.source || 'عمومی');
+          document.getElementById('card-condition').innerText = 'شرط: ' + (node.properties.condition || 'ندارد');
+        });
+    }
+
+    // Fetch Full Graph Data from Backend
+    async function loadGraphData() {
+      try {
+        const res = await fetch('/api/graph/full?limit=150');
+        if (!res.ok) throw new Error('Network error');
+        const data = await res.json();
+        const formattedData = {
+          nodes: data.nodes || [],
+          links: (data.edges || []).map(e => ({
+            source: e.source_id,
+            target: e.target_id,
+            relation_type: e.relation_type
+          }))
+        };
+        initGraph(formattedData);
+        document.getElementById('reconnection-banner').style.display = 'none';
+      } catch (err) {
+        console.warn('API fetch failed, loading default fallback demo view:', err);
+        document.getElementById('reconnection-banner').style.display = 'block';
+        // Provide graceful demo fallback
+        initGraph({
+          nodes: [
+            { id: 'c1', label: 'Claim', properties: { statement: 'قبل از PMF نباید استخدام انبوه کرد', author: 'پیتر تیل', source: 'صفر به یک' } },
+            { id: 'c2', label: 'Claim', properties: { statement: 'در بازارهای شبکه‌ای سرعت مقیاس مهم‌تر است', author: 'رید هافمن', source: 'بلیتزاسکیلینگ' } },
+            { id: 'concept1', label: 'Concept', properties: {} }
+          ],
+          links: [
+            { source: 'c1', target: 'c2', relation_type: 'CONTRADICTS' },
+            { source: 'c1', target: 'concept1', relation_type: 'MENTIONS' }
+          ]
+        });
+      }
+    }
+
+    // Chat Inquiry Submission
+    document.getElementById('send-chat-btn').addEventListener('click', async () => {
+      const input = document.getElementById('chat-query');
+      const query = input.value.trim();
+      if (!query) return;
+
+      const chatMessages = document.getElementById('chat-messages');
+      const userBubble = document.createElement('div');
+      userBubble.className = 'msg-bubble msg-user';
+      userBubble.innerText = query;
+      chatMessages.appendChild(userBubble);
+      input.value = '';
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+
+      try {
+        const res = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query: query })
+        });
+        const data = await res.json();
+        const advisorBubble = document.createElement('div');
+        advisorBubble.className = 'msg-bubble msg-advisor';
+        advisorBubble.innerText = data.response || 'پاسخ دریافت شد.';
+        chatMessages.appendChild(advisorBubble);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+      } catch (err) {
+        const errBubble = document.createElement('div');
+        errBubble.className = 'msg-bubble msg-advisor';
+        errBubble.innerText = 'خطا در ارتباط با سرور دانیار.';
+        chatMessages.appendChild(errBubble);
+      }
+    });
+
+    // Run on startup
+    window.addEventListener('DOMContentLoaded', loadGraphData);
+  </script>
+</body>
+</html>

@@ -6,8 +6,11 @@ graph retrieval (/api/graph), and user note annotations (/api/notes).
 
 from __future__ import annotations
 
+import os
 from typing import Any
 from fastapi import FastAPI, APIRouter, HTTPException, Query, status
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from src.contracts.engine_contracts import IGraphRepository, IAnnotationRepository, ISocraticAdvisor
@@ -187,6 +190,14 @@ def create_app(
 
     router = create_api_router(graph_repo, annotation_repo, advisor)
     app.include_router(router)
+
+    static_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "static")
+    if os.path.isdir(static_dir):
+        app.mount("/static", StaticFiles(directory=static_dir), name="static")
+
+        @app.get("/", include_in_schema=False)
+        def serve_dashboard():
+            return FileResponse(os.path.join(static_dir, "index.html"))
 
     return app
 
