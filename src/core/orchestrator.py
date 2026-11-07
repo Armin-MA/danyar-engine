@@ -7,6 +7,7 @@ and graceful shutdown.
 
 from __future__ import annotations
 
+import socket
 from typing import Any
 from fastapi import FastAPI
 
@@ -21,11 +22,21 @@ from src.contracts.engine_contracts import (
 )
 from src.database.repositories.neo4j_graph_repository import Neo4jGraphRepository
 from src.database.repositories.neo4j_annotation_repository import Neo4jAnnotationRepository
+from src.database.repositories.in_memory_graph_repository import InMemoryGraphRepository
 from src.mechanics.calculate_dynamic_credibility import DynamicCredibilityCalculator
 from src.mechanics.extract_atomic_claims import AtomicClaimExtractor
 from src.mechanics.evaluate_dialectical_conflict import DialecticalConflictEvaluator
 from src.mechanics.formulate_socratic_inquiry import SocraticAdvisor
 from src.ui.api.routes import create_app
+
+
+def is_neo4j_reachable(host: str = "localhost", port: int = 7687, timeout: float = 0.5) -> bool:
+    """Quickly probe if local Neo4j bolt port is accepting connections."""
+    try:
+        with socket.create_connection((host, port), timeout=timeout):
+            return True
+    except (socket.timeout, OSError):
+        return False
 
 
 class BootError(Exception):
@@ -49,9 +60,17 @@ class DanyarContainer:
     ) -> None:
         self.config = config or AppConfig()
 
-        # 1. Database Repositories
-        self.graph_repo = graph_repo or Neo4jGraphRepository(config=self.config.neo4j)
-        self.annotation_repo = annotation_repo or Neo4jAnnotationRepository(config=self.config.neo4j)
+        # 1. Database Repositories (Auto-switch to InMemory if Neo4j is offline)
+        if graph_repo is not None and annotation_repo is not None:
+            self.graph_repo = graph_repo
+            self.annotation_repo = annotation_repo
+        elif is_neo4j_reachable():
+            self.graph_repo = graph_repo or Neo4jGraphRepository(config=self.config.neo4j)
+            self.annotation_repo = annotation_repo or Neo4jAnnotationRepository(config=self.config.neo4j)
+        else:
+            in_mem = InMemoryGraphRepository()
+            self.graph_repo = graph_repo or in_mem
+            self.annotation_repo = annotation_repo or in_mem
 
         # 2. Epistemological Mechanics
         self.credibility_calc = credibility_calc or DynamicCredibilityCalculator()
