@@ -1,0 +1,5 @@
+"""ConceptEntity re-export shim."""
+
+from src.entities.domain_entities import ConceptEntity
+
+__all__ = ["ConceptEntity"]
