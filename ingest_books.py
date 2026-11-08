@@ -17,6 +17,7 @@ from pathlib import Path
 
 from src.core.orchestrator import DanyarContainer
 from src.mechanics.assimilate_book_pdf import assimilate_book_pdf, BookAssimilationSummary
+from src.mechanics.export_llm_digest import export_dialectical_digest
 
 
 BOOKS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "books")
@@ -97,6 +98,10 @@ def main() -> None:
         total_contradictions += summary.contradicts_count
         total_supports += summary.supports_count
 
+    # Export updated dialectical knowledge digest for Claude / ChatGPT / Gemini
+    export_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "exports", "danyar_knowledge_digest.md")
+    export_dialectical_digest(graph_repo, export_path)
+
     print(f"""
 ================================================================================
 🎉 پردازش تمام کتاب‌ها با موفقیت پایان یافت!
@@ -104,8 +109,8 @@ def main() -> None:
    - مجموع گزاره‌ها: {total_claims}
    - مجموع تضادهای دیالکتیکی: {total_contradictions}
    - مجموع نقاط اجماع: {total_supports}
-🌐 برای مشاهده گراف سه‌بعدی و پرسش از مشاور، برنامه را اجرا کنید:
-   python run.py
+📄 فایل خروجی آماده برای تحویل به Claude / ChatGPT / Gemini:
+   {export_path}
 ================================================================================
 """)
 
