@@ -17,7 +17,7 @@ from pathlib import Path
 
 from src.core.orchestrator import DanyarContainer
 from src.mechanics.assimilate_book_pdf import assimilate_book_pdf, BookAssimilationSummary
-from src.mechanics.export_llm_digest import export_dialectical_digest
+from src.mechanics.export_knowledge_pack import export_knowledge_pack
 
 
 BOOKS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "books")
@@ -98,9 +98,9 @@ def main() -> None:
         total_contradictions += summary.contradicts_count
         total_supports += summary.supports_count
 
-    # Export updated dialectical knowledge digest for Claude / ChatGPT / Gemini
-    export_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "exports", "danyar_knowledge_digest.md")
-    export_dialectical_digest(graph_repo, export_path)
+    # Automatically generate updated knowledge pack for Claude / ChatGPT / Gemini
+    export_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "danyar_knowledge_pack.md")
+    export_knowledge_pack(graph_repo, export_file)
 
     print(f"""
 ================================================================================
@@ -109,8 +109,8 @@ def main() -> None:
    - مجموع گزاره‌ها: {total_claims}
    - مجموع تضادهای دیالکتیکی: {total_contradictions}
    - مجموع نقاط اجماع: {total_supports}
-📄 فایل خروجی آماده برای تحویل به Claude / ChatGPT / Gemini:
-   {export_path}
+📄 بسته دانشی ویژه تحویل به Claude / ChatGPT / Gemini در فایل زیر به‌روز شد:
+   {export_file}
 ================================================================================
 """)
 
